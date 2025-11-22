@@ -1,4 +1,4 @@
-name: Android CI Build
+name: Android CI Build (no wrapper)
 
 on:
   push:
@@ -8,9 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -18,12 +18,25 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Run Gradle build (assembleDebug)
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: assembleDebug
+      - name: Show java info
+        run: |
+          java -version
+          javac -version
+
+      - name: Install Gradle (apt)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y gradle
+
+      - name: Show gradle version
+        run: gradle -v
+
+      - name: Run Gradle assembleDebug
+        working-directory: .
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload APK artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
